@@ -1,9 +1,6 @@
 import whisper
-from metrics import runtime_metrics
 
-def asr_transcript():
+def asr_transcript(file_path: str) -> str:
     model = whisper.load_model("tiny")
-    result = model.transcribe("assets/audio/sample/japanese2.wav")
-    print(result["text"])
-
-runtime_metrics(asr_transcript)
+    result = model.transcribe(file_path)
+    return str(result["text"])
