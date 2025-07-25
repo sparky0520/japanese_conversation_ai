@@ -69,5 +69,4 @@ async def tts_stream():
           stream.close()
           pa.terminate()
 
-if __name__ == "__main__":
-    asyncio.run(tts_stream())
+      asyncio.run(tts_stream())
