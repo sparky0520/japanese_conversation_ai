@@ -8,11 +8,11 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-API_KEY = os.getenv("MURF_TTS_API_KEY") # Or use os.getenv("MURF_API_KEY") if you have set the API key as an environment variable
+API_KEY = os.getenv("MURF_TTS_API_KEY")
 WS_URL = "wss://api.murf.ai/v1/speech/stream-input"
-PARAGRAPH = """こんにちは！アキだよ。言語交換、楽しみにしてたんだ！
+# PARAGRAPH = """こんにちは！アキだよ。言語交換、楽しみにしてたんだ！
 
-今日はどうだった？何か面白いことあった？"""
+# 今日はどうだった？何か面白いことあった？"""
 
 # Audio format settings (must match your API output)
 SAMPLE_RATE = 44100
@@ -20,7 +20,7 @@ CHANNELS = 2
 CHANNEL_TYPE="MONO" if CHANNELS == 1 else "STEREO"
 FORMAT = pyaudio.paInt16
 
-async def tts_stream():
+async def tts_stream(paragraph: str):
   async with websockets.connect(
       f"{WS_URL}?api-key={API_KEY}&sample_rate={SAMPLE_RATE}&channel_type={CHANNEL_TYPE}&format=WAV"
   ) as ws:
@@ -39,7 +39,7 @@ async def tts_stream():
 
       # Send text in one go (or chunk if you want streaming)
       text_msg = {
-          "text": PARAGRAPH,
+          "text": paragraph,
           "end" : True # This will close the context. So you can re-run and concurrency is available.
       }
       print(f'Sending payload : {text_msg}')
@@ -69,4 +69,3 @@ async def tts_stream():
           stream.close()
           pa.terminate()
 
-      asyncio.run(tts_stream())
