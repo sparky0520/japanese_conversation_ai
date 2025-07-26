@@ -10,62 +10,85 @@ load_dotenv()
 
 API_KEY = os.getenv("MURF_TTS_API_KEY")
 WS_URL = "wss://api.murf.ai/v1/speech/stream-input"
-# PARAGRAPH = """こんにちは！アキだよ。言語交換、楽しみにしてたんだ！
 
-# 今日はどうだった？何か面白いことあった？"""
-
-# Audio format settings (must match your API output)
+# Audio format settings
 SAMPLE_RATE = 44100
-CHANNELS = 2
-CHANNEL_TYPE="MONO" if CHANNELS == 1 else "STEREO"
+CHANNELS = 1
+CHANNEL_TYPE = "MONO"# if CHANNELS == 1 else "STEREO"
 FORMAT = pyaudio.paInt16
 
-async def tts_stream(paragraph: str):
-  async with websockets.connect(
-      f"{WS_URL}?api-key={API_KEY}&sample_rate={SAMPLE_RATE}&channel_type={CHANNEL_TYPE}&format=WAV"
-  ) as ws:
-      # Send voice config first (optional)
-      voice_config_msg = {
-          "voice_config": {
-              "voiceId": "ja-JP-kimi",
-              "style": "Conversational",
-              "rate": 0,
-              "pitch": 0,
-              "variation": 1
-          }
-      }
-      print(f'Sending payload : {voice_config_msg}')
-      await ws.send(json.dumps(voice_config_msg))
+async def _tts_stream_async(paragraph: str):
+    async with websockets.connect(
+        f"{WS_URL}?api-key={API_KEY}&sample_rate={SAMPLE_RATE}&channel_type={CHANNEL_TYPE}&format=WAV"
+    ) as ws:
+        # Send voice config first
+        voice_config_msg = {
+            "voice_config": {
+                "voiceId": "ja-JP-kimi",
+                "style": "Conversational",
+                "rate": 0,
+                "pitch": 0,
+                "variation": 1
+            }
+        }
+        await ws.send(json.dumps(voice_config_msg))
 
-      # Send text in one go (or chunk if you want streaming)
-      text_msg = {
-          "text": paragraph,
-          "end" : True # This will close the context. So you can re-run and concurrency is available.
-      }
-      print(f'Sending payload : {text_msg}')
-      await ws.send(json.dumps(text_msg))
+        # Send text
+        text_msg = {
+            "text": paragraph,
+            "end": True
+        }
+        await ws.send(json.dumps(text_msg))
 
-      # Setup audio stream
-      pa = pyaudio.PyAudio()
-      stream = pa.open(format=FORMAT, channels=CHANNELS, rate=SAMPLE_RATE, output=True)
+        # Setup audio stream
+        pa = pyaudio.PyAudio()
+        stream = pa.open(format=FORMAT, channels=CHANNELS, rate=SAMPLE_RATE, output=True)
 
-      first_chunk = True
-      try:
-          while True:
-              response = await ws.recv()
-              data = json.loads(response)
-              print(f'Received data:  {data}')
-              if "audio" in data:
-                  audio_bytes = base64.b64decode(data["audio"])
-                  # Skip the first 44 bytes (WAV header) only for the first chunk
-                  if first_chunk and len(audio_bytes) > 44:
-                      audio_bytes = audio_bytes[44:]
-                      first_chunk = False
-                  stream.write(audio_bytes)
-              if data.get("isFinalAudio"):
-                  break
-      finally:
-          stream.stop_stream()
-          stream.close()
-          pa.terminate()
+        first_chunk = True
+        try:
+            while True:
+                try:
+                    # Add timeout to prevent hanging
+                    response = await asyncio.wait_for(ws.recv(), timeout=10.0)
+                    data = json.loads(response)
+                    
+                    if "audio" in data:
+                        audio_bytes = base64.b64decode(data["audio"])
+                        if first_chunk and len(audio_bytes) > 44:
+                            audio_bytes = audio_bytes[44:]
+                            first_chunk = False
+                        stream.write(audio_bytes)
+                    
+                    if data.get("isFinalAudio"):
+                        print("Final audio received, closing...")
+                        break
+                        
+                except asyncio.TimeoutError:
+                    print("TTS timeout, closing connection")
+                    break
+                except websockets.exceptions.ConnectionClosed:
+                    print("WebSocket connection closed")
+                    break
+                    
+        except Exception as e:
+            print(f"TTS error: {e}")
+        finally:
+            stream.stop_stream()
+            stream.close()
+            pa.terminate()
 
+def tts_stream(paragraph: str):
+    """Synchronous wrapper with proper cleanup"""
+    try:
+        # Create new event loop for this call
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            loop.run_until_complete(_tts_stream_async(paragraph))
+        finally:
+            # Proper cleanup
+            loop.close()
+            
+    except Exception as e:
+        print(f"TTS stream error: {e}")
