@@ -31,8 +31,8 @@ Before continuing make sure you have the prerequisites to run openai-whisper. In
 
 1. Clone this repo using `git clone https://github.com/sparky0520/japanese_conversation_ai.git`
 2. Hop into the directory using `cd japanese_conversation_ai`
-   2.1. Create a virutal environment using `python -m venv env` (Optional)
-   2.2. Use the environment `env\Scripts\activate` for Windows and `source env/bin/activate` for Unix (Optional)
+   1. Create a virutal environment using `python -m venv env` (Optional)
+   2. Use the environment `env\Scripts\activate` for Windows and `source env/bin/activate` for Unix (Optional)
 3. Install all packages using `pip install -r requirements.txt`
 4. Run the main file `python main.py`
 5. Enjoy!
