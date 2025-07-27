@@ -17,7 +17,7 @@ def main():
             # Get transcription (blocks until speech is complete)
             transcription = asr.listen_for_speech()
 
-            if transcription:
+            if transcription.strip():
                 print(f"You said: {transcription}")
 
                 # Check for exit commands
@@ -35,15 +35,18 @@ def main():
                 print("Fetching llm response...")
                 response = chat_bot.get_response(transcription)
                 print(f"アキ: {response}")
-                tts_stream(response)  # Blocks until complete
-                print(f"Result: {response}")
+                # Before calling TTS
+                # if response and response.strip():
+                tts_stream(response)
+                # else:
+                #     print("Skipping TTS - empty response")
             else:
                 print("No speech detected")
         except KeyboardInterrupt:
             print("\n\nアキ: さようなら！また話しましょうね！")
             break
         except Exception as e:
-            print(f"エラーが発生しました: {str(e)}")
+            print(f"エラーが発生しました (main.py): {str(e)}")
         print("\n" + "="*50 + "\n")
 
 if __name__ == "__main__":

@@ -45,13 +45,13 @@ class JapaneseChatBot:
             response = self.client.models.generate_content(
                 model=self.model,
                 contents=conversation_context,
-                config=types.GenerateContentConfig(
-                    temperature=0.7,  # Make responses a bit more natural/varied
-                    max_output_tokens=500  # Limit response length
-                )
+                # config=types.GenerateContentConfig(
+                #     temperature=0.7,  # Make responses a bit more natural/varied
+                #     max_output_tokens=500  # Limit response length
+                # )
             )
             
-            ai_response = response.text.strip()
+            ai_response = response.text.strip() if response.text else ""
             
             # Add AI response to conversation history
             self.conversation_history.append(ai_response)
@@ -59,7 +59,7 @@ class JapaneseChatBot:
             return ai_response
             
         except Exception as e:
-            return f"エラーが発生しました: {str(e)}"
+            return f"エラーが発生しました(llm.py): {str(e)}"
     
     def reset_conversation(self):
         """Reset the conversation history"""

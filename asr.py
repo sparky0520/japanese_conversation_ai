@@ -5,7 +5,7 @@ import time
 
 class VoiceActivatedASR:
     def __init__(self):
-        self.model = whisper.load_model("base")
+        self.model = whisper.load_model("tiny")
         self.samplerate = 16000
         self.silence_threshold = 0.01
         self.min_speech_duration = 1.0
