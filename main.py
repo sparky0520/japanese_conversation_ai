@@ -43,9 +43,11 @@ def main():
             else:
                 print("No speech detected")
         except KeyboardInterrupt:
+            tts_stream("さようなら！また話しましょうね！")
             print("\n\nアキ: さようなら！また話しましょうね！")
             break
         except Exception as e:
+            tts_stream("わー、エラーが発生しました")
             print(f"エラーが発生しました (main.py): {str(e)}")
         print("\n" + "="*50 + "\n")
 
