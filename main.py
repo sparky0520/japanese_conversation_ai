@@ -36,10 +36,10 @@ def main():
                 response = chat_bot.get_response(transcription)
                 print(f"アキ: {response}")
                 # Before calling TTS
-                # if response and response.strip():
-                tts_stream(response)
-                # else:
-                #     print("Skipping TTS - empty response")
+                if response and response.strip():
+                    tts_stream(response)
+                else:
+                    print("Skipping TTS - empty response")
             else:
                 print("No speech detected")
         except KeyboardInterrupt:
